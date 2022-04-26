@@ -91,15 +91,20 @@ trait FalconreLoader: falcon::loader::Loader {
     }
 
     fn falconre_program_verbose(&self) -> PyResult<(il::Program, Vec<(FunctionEntry, String)>)> {
-        map_err(self.program_verbose().map(|(program, errors)| {
-            (
-                program.into(),
-                errors
-                    .into_iter()
-                    .map(|(function_entry, error)| (function_entry.into(), error.to_string()))
-                    .collect(),
-            )
-        }))
+        map_err(
+            self.program_verbose(&falcon::translator::Options::default())
+                .map(|(program, errors)| {
+                    (
+                        program.into(),
+                        errors
+                            .into_iter()
+                            .map(|(function_entry, error)| {
+                                (function_entry.into(), error.to_string())
+                            })
+                            .collect(),
+                    )
+                }),
+        )
     }
 
     fn falconre_program_recursive(&self) -> PyResult<il::Program> {
@@ -109,15 +114,20 @@ trait FalconreLoader: falcon::loader::Loader {
     fn falconre_program_recursive_verbose(
         &self,
     ) -> PyResult<(il::Program, Vec<(FunctionEntry, String)>)> {
-        map_err(self.program_recursive_verbose().map(|(program, errors)| {
-            (
-                program.into(),
-                errors
-                    .into_iter()
-                    .map(|(function_entry, error)| (function_entry.into(), error.to_string()))
-                    .collect(),
-            )
-        }))
+        map_err(
+            self.program_recursive_verbose(&falcon::translator::Options::default())
+                .map(|(program, errors)| {
+                    (
+                        program.into(),
+                        errors
+                            .into_iter()
+                            .map(|(function_entry, error)| {
+                                (function_entry.into(), error.to_string())
+                            })
+                            .collect(),
+                    )
+                }),
+        )
     }
 }
 

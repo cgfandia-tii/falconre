@@ -1,16 +1,14 @@
-FROM debian:buster AS builder
+FROM python:3.9-bullseye AS builder
 
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
-        build-essential \
-        clang \
-        curl \
-        libz3-dev \
-        pkg-config \
-        python3 \
-        python3-pip \
-        wget && \
+    build-essential \
+    clang \
+    curl \
+    libz3-dev \
+    pkg-config \
+    wget && \
     apt-get clean
 
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -29,12 +27,12 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN wget https://github.com/aquynh/capstone/archive/4.0.1.tar.gz && \
-    tar xf 4.0.1.tar.gz && \ 
-    cd capstone-4.0.1 && \
+RUN wget https://github.com/aquynh/capstone/archive/4.0.2.tar.gz && \
+    tar xf 4.0.2.tar.gz && \ 
+    cd capstone-4.0.2 && \
     make -j 4 && make install
 
-RUN pip3 install setuptools setuptools-rust
+RUN pip3 install --no-cache-dir setuptools setuptools-rust
 
 WORKDIR /falconre
 COPY ./src /falconre/src
@@ -43,21 +41,21 @@ COPY ./Cargo.lock /falconre/Cargo.lock
 COPY ./falconre/ /falconre/falconre
 COPY ./setup.py /falconre/setup.py
 
-RUN python3 setup.py install
+RUN python3 setup.py bdist_wheel
 
-FROM debian:buster
+FROM python:3.9-bullseye
 
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
-        libz3-4 \
-        python3 \
-        python3-pip && \
+    libz3-4 && \
     apt-get clean
 
 COPY --from=builder /usr/lib/libcapstone.so.4 /usr/lib/
-COPY --from=builder /usr/local/lib/python3.7/dist-packages/falconre-0.1.0-py3.7-linux-x86_64.egg /usr/local/lib/python3.7/dist-packages/
+COPY --from=builder /falconre/dist/falconre-0.1.0-cp39-cp39-linux_x86_64.whl /tmp/falconre-0.1.0-cp39-cp39-linux_x86_64.whl
+RUN pip3 install /tmp/falconre-0.1.0-cp39-cp39-linux_x86_64.whl && \
+    rm -rf /tmp/falconre-0.1.0-cp39-cp39-linux_x86_64.whl
 
 COPY requirements.txt .
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
